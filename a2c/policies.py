@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from a2c.utils import (
+from a2c.util import (
     conv, fc, conv_to_fc, batch_to_seq, seq_to_batch, lstm, lnlstm, sample,
 )
 

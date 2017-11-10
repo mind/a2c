@@ -1,16 +1,14 @@
-import logging
 import time
 
 import joblib
 import numpy as np
 import tensorflow as tf
 
-from a2c.utils import (
+from a2c import logger
+from a2c.util import (
     cat_entropy, discount_with_dones, explained_variance,
     find_trainable_variables, make_path, mse, Scheduler, set_global_seeds,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class Model(object):
@@ -116,7 +114,8 @@ class Runner(object):
         self.obs[:, :, :, -self.nc:] = obs
 
     def run(self):
-        mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [], [], [], [], []
+        mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = ([], [], [], [],
+                                                               [])
         mb_states = self.states
         for n in range(self.nsteps):
             actions, values, states = self.model.step(
@@ -146,7 +145,8 @@ class Runner(object):
         last_values = self.model.value(
             self.obs, self.states, self.dones).tolist()
         # discount/bootstrap off value fn
-        for n, (rewards, dones, value) in enumerate(zip(mb_rewards, mb_dones, last_values)):
+        values = enumerate(zip(mb_rewards, mb_dones, last_values))
+        for n, (rewards, dones, value) in values:
             rewards = rewards.tolist()
             dones = dones.tolist()
             if dones[-1] == 0:
