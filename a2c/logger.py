@@ -67,8 +67,6 @@ class HumanOutputFormat(KVWriter, SeqWriter):
             ))
         lines.append(dashes)
         self.file.write('\n'.join(lines) + '\n')
-
-        # Flush the output to the file
         self.file.flush()
 
     def _truncate(self, s):
@@ -193,10 +191,6 @@ def make_output_format(format, ev_dir):
     else:
         raise ValueError('Unknown format specified: {}'.format(format))
 
-# ================================================================
-# API
-# ================================================================
-
 
 def logkv(key, val):
     """Log a value of some diagnostic.
@@ -226,24 +220,24 @@ def getkvs():
     return Logger.CURRENT.name2val
 
 
-def log(level=INFO, *args):
-    Logger.CURRENT.log(level=level, *args)
+def log(*args, **kwargs):
+    Logger.CURRENT.log(*args, level=kwargs.get('level', INFO))
 
 
 def debug(*args):
-    log(level=DEBUG, *args)
+    log(*args, level=DEBUG)
 
 
 def info(*args):
-    log(level=INFO, *args)
+    log(*args, level=INFO)
 
 
 def warn(*args):
-    log(level=WARN, *args)
+    log(*args, level=WARN)
 
 
 def error(*args):
-    log(level=ERROR, *args)
+    log(*args, level=ERROR)
 
 
 def set_level(level):
@@ -258,10 +252,6 @@ def get_dir():
 record_tabular = logkv
 dump_tabular = dumpkvs
 
-# ================================================================
-# Backend
-# ================================================================
-
 
 class Logger(object):
 
@@ -274,8 +264,6 @@ class Logger(object):
         self.dir = dir
         self.output_formats = output_formats
 
-    # Logging API, forwarded
-    # ----------------------------------------
     def logkv(self, key, val):
         self.name2val[key] = val
 
@@ -287,7 +275,8 @@ class Logger(object):
                 fmt.writekvs(self.name2val)
         self.name2val.clear()
 
-    def log(self, level=INFO, *args):
+    def log(self, *args, **kwargs):
+        level = kwargs.get('level', INFO)
         if self.level <= level:
             self._do_log(args)
 
@@ -308,7 +297,8 @@ class Logger(object):
 
 
 Logger.DEFAULT = Logger.CURRENT = Logger(
-    dir=None, output_formats=[HumanOutputFormat(sys.stdout)])
+    dir=None, output_formats=[HumanOutputFormat(sys.stdout)]
+)
 
 
 def configure(dir=None, format_strs=None):
@@ -328,14 +318,14 @@ def configure(dir=None, format_strs=None):
     output_formats = [make_output_format(f, dir) for f in format_strs]
 
     Logger.CURRENT = Logger(dir=dir, output_formats=output_formats)
-    log('Logging to {}'.format(dir))
+    info('Logging to {}'.format(dir))
 
 
 def reset():
     if Logger.CURRENT is not Logger.DEFAULT:
         Logger.CURRENT.close()
         Logger.CURRENT = Logger.DEFAULT
-        log('Reset logger')
+        info('Reset logger')
 
 
 class scoped_configure(object):
